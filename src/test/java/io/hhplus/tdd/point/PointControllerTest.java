@@ -1,6 +1,8 @@
 package io.hhplus.tdd.point;
 
 import io.hhplus.tdd.point.controller.PointController;
+import io.hhplus.tdd.point.domain.PointHistory;
+import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
 import io.hhplus.tdd.point.service.PointService;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.filter.CharacterEncodingFilter;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -78,5 +82,26 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.point").value(0))
                 .andExpect(jsonPath("$.updateMillis").value(0));
         verify(pointService).getPoint(USER_ID);
+    }
+
+    @Test
+    @DisplayName("유저의 포인트 충전/사용 내역 조회 성공")
+    void succeedWhenRetrievingUserPointHistory() throws Exception {
+        //given
+        List<PointHistory> pointHistoryList = List.of(
+                new PointHistory(1L, USER_ID, 1000L, TransactionType.CHARGE, 0L),
+                new PointHistory(2L, USER_ID, 500L, TransactionType.USE, 0L)
+        );
+
+        given(pointService.getAllHistory(USER_ID)).willReturn(pointHistoryList);
+        //when
+        //then
+        mvc.perform(get("/point/{id}/histories", USER_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.[0].amount").value(1000L))
+                .andExpect(jsonPath("$.[1].amount").value(500L))
+                .andExpect(jsonPath("$.[0].type").value("CHARGE"))
+                .andExpect(jsonPath("$.[1].type").value("USE"));
+        verify(pointService).getAllHistory(USER_ID);
     }
 }
