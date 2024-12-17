@@ -124,4 +124,25 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.point").value(chargeAmount));
         verify(pointService).charge(USER_ID,chargeAmount);
     }
+
+    @Test
+    @DisplayName("유저의 포인트 사용 성공")
+    void succeedWhenUserPointsAreUsedSuccessfully() throws Exception {
+        //given
+        long currentPoint = 1000L;
+        long useAmount = 500L;
+        long expectedAmount = 500L;
+        UserPoint userPoint = new UserPoint(USER_ID, currentPoint-useAmount, 0);
+
+        given(pointService.use(USER_ID, useAmount)).willReturn(userPoint);
+        //when
+        //then
+        mvc.perform(patch("/point/{id}/use", USER_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(String.valueOf(useAmount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(USER_ID))
+                .andExpect(jsonPath("$.point").value(expectedAmount));
+        verify(pointService).use(USER_ID,useAmount);
+    }
 }
