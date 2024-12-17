@@ -92,4 +92,61 @@ class PointServiceTest {
         verify(pointHistoryRepository).save(eq(USER_ID), eq(chargeAmount), eq(TransactionType.CHARGE), anyLong());
     }
 
+    @Test
+    @DisplayName("사용 포인트가 0원 이하일때 사용 실패")
+    void failWhenUsedPointsAreZeroOrNegative() {
+        //given
+        UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
+        given(userPointRepository.findById(USER_ID)).willReturn(userPoint);
+
+        //when
+        //then
+        assertThatThrownBy(() -> {
+            pointService.use(USER_ID, 0);
+        })
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 0 이상이어야 합니다.");
+
+        assertThatThrownBy(() -> {
+            pointService.use(USER_ID, -100);
+        })
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 0 이상이어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("보유 포인트가 사용 포인트 보다 작을때 사용 실패")
+    void failWhenUsedPointsExceedAvailablePoints() {
+        //given
+        UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
+        given(userPointRepository.findById(USER_ID)).willReturn(userPoint);
+        //when
+        //then
+        assertThatThrownBy(() -> {
+            pointService.use(USER_ID, 1500L);
+        })
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 보유 포인트보다 작아야 합니다.");
+    }
+
+    @Test
+    @DisplayName("사용 포인트가 0원 이상이고, 보유 포인트가 사용 포인트보다 클 때 사용 성공")
+    void succeedWhenUsedPointsAreValidAndWithinAvailablePoints() {
+        //given
+        long currentPoint = 2000;
+        long useAmount = 500L;
+        long expectedPoint = 1500L;
+        UserPoint userPoint = new UserPoint(USER_ID, currentPoint, System.currentTimeMillis());
+        given(userPointRepository.findById(USER_ID)).willReturn(userPoint);
+        given(userPointRepository.saveOrUpdate(USER_ID, expectedPoint)).willReturn(new UserPoint(USER_ID, expectedPoint, System.currentTimeMillis()));
+
+        //when
+        UserPoint result = pointService.use(USER_ID, useAmount);
+
+        //then
+        assertThat(result).isNotNull();
+        assertThat(result.point()).isEqualTo(expectedPoint);
+        verify(userPointRepository).saveOrUpdate(eq(USER_ID), eq(expectedPoint));
+        verify(pointHistoryRepository).save(eq(USER_ID), eq(useAmount), eq(TransactionType.USE), anyLong());
+    }
 }

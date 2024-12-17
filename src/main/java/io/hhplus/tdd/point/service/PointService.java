@@ -29,9 +29,7 @@ public class PointService {
 
         pointHistoryRepository.save(userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
 
-        UserPoint result = userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
-
-        return result;
+        return userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
     }
 
     public UserPoint use(long userId, long amount) {
@@ -39,8 +37,7 @@ public class PointService {
         UserPoint usedUserPoint = userPoint.use(amount);
 
         pointHistoryRepository.save(userId,amount,TransactionType.USE, System.currentTimeMillis());
-        UserPoint result = userPointRepository.saveOrUpdate(usedUserPoint.id(), usedUserPoint.point());
-        return null;
+        return userPointRepository.saveOrUpdate(usedUserPoint.id(), usedUserPoint.point());
     }
 
     public List<PointHistory> getAllHistory(long userId){
