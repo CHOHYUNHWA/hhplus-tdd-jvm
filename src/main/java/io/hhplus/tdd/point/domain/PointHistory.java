@@ -7,4 +7,7 @@ public record PointHistory(
         TransactionType type,
         long updateMillis
 ) {
+    public static PointHistory createHistory(long userId, long amount, TransactionType transactionType) {
+        return null;
+    }
 }

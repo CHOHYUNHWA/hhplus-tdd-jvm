@@ -1,6 +1,7 @@
 package io.hhplus.tdd.point.service;
 
 import io.hhplus.tdd.point.domain.PointHistory;
+import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
@@ -23,6 +24,14 @@ public class PointService {
     }
 
     public UserPoint charge(long userId, long amount){
+        UserPoint userPoint = getPoint(userId);
+        UserPoint updatedUserPoint = userPoint.charge(amount);
+
+        PointHistory pointHistory = PointHistory.createHistory(userId, amount, TransactionType.CHARGE);
+        pointHistoryRepository.save(pointHistory.id(), pointHistory.amount(), pointHistory.type(), System.currentTimeMillis());
+
+        UserPoint result = userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
+
         return null;
     }
 
