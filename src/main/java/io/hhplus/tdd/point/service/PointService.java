@@ -19,7 +19,7 @@ public class PointService {
     private final PointHistoryRepository pointHistoryRepository;
 
     public UserPoint getPoint(long userId){
-        return null;
+        return userPointRepository.findById(userId);
     }
 
     public UserPoint charge(long userId, long amount){
@@ -31,7 +31,7 @@ public class PointService {
     }
 
     public List<PointHistory> getAllHistory(long userId){
-        return null;
+        return pointHistoryRepository.findAllById(userId);
     }
 
 }
