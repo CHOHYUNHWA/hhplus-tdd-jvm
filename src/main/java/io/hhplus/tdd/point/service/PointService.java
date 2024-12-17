@@ -31,7 +31,7 @@ public class PointService {
 
         UserPoint result = userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
 
-        return null;
+        return result;
     }
 
     public UserPoint use(long userId, long amount) {
