@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -23,6 +24,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -103,5 +105,23 @@ public class PointControllerTest {
                 .andExpect(jsonPath("$.[0].type").value("CHARGE"))
                 .andExpect(jsonPath("$.[1].type").value("USE"));
         verify(pointService).getAllHistory(USER_ID);
+    }
+
+    @Test
+    @DisplayName("유저의 포인트 충전 성공")
+    void succeedWhenUserPointsAreChargedSuccessfully() throws Exception {
+        //given
+        long chargeAmount = 5000L;
+        UserPoint userPoint = new UserPoint(USER_ID, chargeAmount, 0);
+        given(pointService.charge(USER_ID,chargeAmount)).willReturn(userPoint);
+        //when
+        //then
+        mvc.perform(patch("/point/{id}/charge", USER_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(String.valueOf(chargeAmount)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(USER_ID))
+                .andExpect(jsonPath("$.point").value(chargeAmount));
+        verify(pointService).charge(USER_ID,chargeAmount);
     }
 }
