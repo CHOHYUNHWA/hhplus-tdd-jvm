@@ -53,4 +53,44 @@ public class UserPointTest {
 
     }
 
+    @Test
+    @DisplayName("사용할 포인트가 0보다 작을 경우 실패")
+    void failWhenUsedPointsAreNegative() {
+        // given
+        UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
+
+        // when -then
+        assertThatThrownBy(() -> userPoint.use(0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 0 이상이어야 합니다.");
+
+        assertThatThrownBy(() -> userPoint.use(-1000))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 0 이상이어야 합니다.");
+    }
+
+    @Test
+    @DisplayName("사용할 포인트가 보유 포인트 보다 작을 경우 실패")
+    void failWhenUsedPointsExceedAvailablePoints() {
+        // given
+        UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
+        // when
+        // then
+        assertThatThrownBy(() -> userPoint.use(1500L))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("사용할 포인트는 보유 포인트보다 작아야 합니다.");
+    }
+
+    @Test
+    @DisplayName("사용 성공 시 보유 포인트 차감")
+    void deductPointsWhenUsageIsSuccessful() {
+        // given
+        UserPoint userPoint = new UserPoint(USER_ID, 10000L, System.currentTimeMillis());
+        // when
+        // then
+        UserPoint usedUserPoint = userPoint.use(1500L);
+        assertThat(usedUserPoint.point()).isEqualTo(8500L);
+    }
+
+
 }

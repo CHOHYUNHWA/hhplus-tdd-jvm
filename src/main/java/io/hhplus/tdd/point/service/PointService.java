@@ -36,6 +36,14 @@ public class PointService {
     }
 
     public UserPoint use(long userId, long amount) {
+        UserPoint userPoint = getPoint(userId);
+        UserPoint usedUserPoint = userPoint.use(amount);
+
+        PointHistory pointHistory = PointHistory.createHistory(userId, amount, TransactionType.USE);
+        pointHistoryRepository.save(pointHistory.id(), pointHistory.amount(), pointHistory.type(), System.currentTimeMillis());
+
+        UserPoint result = userPointRepository.saveOrUpdate(usedUserPoint.id(), usedUserPoint.point());
+
         return null;
     }
 

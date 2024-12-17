@@ -1,5 +1,7 @@
 package io.hhplus.tdd.point.domain;
 
+import org.apache.catalina.User;
+
 public record UserPoint(
         long id,
         long point,
@@ -22,5 +24,18 @@ public record UserPoint(
         }
 
         return new UserPoint(id,  this.point + amount, System.currentTimeMillis());
+    }
+
+    public UserPoint use(long amount) {
+
+        if(amount <= 0){
+            throw new IllegalArgumentException("사용할 포인트는 0 이상이어야 합니다.");
+        }
+
+        if(amount > this.point){
+            throw new IllegalArgumentException("사용할 포인트는 보유 포인트보다 작아야 합니다.");
+        }
+
+        return new UserPoint(id,  this.point - amount, System.currentTimeMillis());
     }
 }
