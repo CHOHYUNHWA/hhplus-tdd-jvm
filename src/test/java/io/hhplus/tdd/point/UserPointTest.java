@@ -13,7 +13,7 @@ public class UserPointTest {
     static final Long USER_ID = 1L;
 
     @Test
-    @DisplayName("0 이하의 금액 충전시 테스트 실패")
+    @DisplayName("0 이하의 금액 충전시 테스트 IllegalArgumentException 발생")
     void chargeFailsWhenAmountIsZeroOrNegative() {
         //given
         UserPoint userPoint = UserPoint.empty(USER_ID);
@@ -29,7 +29,7 @@ public class UserPointTest {
     }
 
     @Test
-    @DisplayName("충전양이 100만 이상일 경우 테스트 실패")
+    @DisplayName("충전양이 100만 이상일 경우 테스트 IllegalArgumentException 발생")
     void chargeFailsWhenAmountExceedsLimit(){
         //given
         UserPoint userPoint = UserPoint.empty(USER_ID);
@@ -54,7 +54,7 @@ public class UserPointTest {
     }
 
     @Test
-    @DisplayName("사용할 포인트가 0보다 작을 경우 실패")
+    @DisplayName("사용할 포인트가 0보다 작을 경우 IllegalArgumentException 발생")
     void failWhenUsedPointsAreNegative() {
         // given
         UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
@@ -70,7 +70,7 @@ public class UserPointTest {
     }
 
     @Test
-    @DisplayName("사용할 포인트가 보유 포인트 보다 작을 경우 실패")
+    @DisplayName("사용할 포인트가 보유 포인트 보다 작을 경우 IllegalArgumentException 발생")
     void failWhenUsedPointsExceedAvailablePoints() {
         // given
         UserPoint userPoint = new UserPoint(USER_ID, 1000L, System.currentTimeMillis());
