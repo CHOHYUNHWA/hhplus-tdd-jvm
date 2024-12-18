@@ -20,4 +20,9 @@ class ApiControllerAdvice extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(400).body(new ErrorResponse("400", message));
     }
 
+    @ExceptionHandler(value = IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
+        return ResponseEntity.status(400).body(new ErrorResponse("400", e.getMessage()));
+    }
+
 }
