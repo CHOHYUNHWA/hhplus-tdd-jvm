@@ -10,6 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
@@ -18,26 +22,53 @@ public class PointService {
 
     private final UserPointRepository userPointRepository;
     private final PointHistoryRepository pointHistoryRepository;
+    private final Map<String, Lock> userLockMap = new ConcurrentHashMap<>();
 
     public UserPoint getPoint(long userId){
         return userPointRepository.findById(userId);
     }
 
     public UserPoint charge(long userId, long amount){
-        UserPoint userPoint = getPoint(userId);
-        UserPoint updatedUserPoint = userPoint.charge(amount);
+        Lock lock = userLockMap.computeIfAbsent(String.valueOf(userId), k -> new ReentrantLock(true));
+        lock.lock();
+        long startLockTime = System.currentTimeMillis();
+        log.info("charge start - acquired lock Id : {}", userId);
 
-        pointHistoryRepository.save(userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
+        try {
+            UserPoint userPoint = getPoint(userId);
+            UserPoint updatedUserPoint = userPoint.charge(amount);
+            log.info("충전 완료 : UserPoint[id={}, point={}->{}]",updatedUserPoint.id(),userPoint.point(),updatedUserPoint.point());
 
-        return userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
+            pointHistoryRepository.save(userId, amount, TransactionType.CHARGE, System.currentTimeMillis());
+
+            return userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
+        } finally {
+            long lockEndTime = System.currentTimeMillis();
+            log.info("charge completed - time taken: {}", lockEndTime - startLockTime);
+            lock.unlock();
+        }
     }
 
     public UserPoint use(long userId, long amount) {
-        UserPoint userPoint = getPoint(userId);
-        UserPoint usedUserPoint = userPoint.use(amount);
+        Lock lock = userLockMap.computeIfAbsent(String.valueOf(userId), k -> new ReentrantLock(true));
+        lock.lock();
+        long startLockTime = System.currentTimeMillis();
+        log.info("use start - acquired lock Id : {}", userId);
 
-        pointHistoryRepository.save(userId,amount,TransactionType.USE, System.currentTimeMillis());
-        return userPointRepository.saveOrUpdate(usedUserPoint.id(), usedUserPoint.point());
+        try {
+            UserPoint userPoint = getPoint(userId);
+            UserPoint usedUserPoint = userPoint.use(amount);
+            log.info("사용 완료 : UserPoint[id={}, point={}->{}]",usedUserPoint.id(),userPoint.point(),usedUserPoint.point());
+
+            pointHistoryRepository.save(userId,amount,TransactionType.USE, System.currentTimeMillis());
+
+            return userPointRepository.saveOrUpdate(usedUserPoint.id(), usedUserPoint.point());
+        }
+        finally {
+            long lockEndTime = System.currentTimeMillis();
+            log.info("use completed - time taken: {}",lockEndTime - startLockTime);
+            lock.unlock();
+        }
     }
 
     public List<PointHistory> getAllHistory(long userId){
