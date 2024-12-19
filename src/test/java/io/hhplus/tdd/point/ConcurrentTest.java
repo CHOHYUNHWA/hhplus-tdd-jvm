@@ -34,11 +34,15 @@ public class ConcurrentTest {
     PointService pointService = new PointService(userPointRepository, pointHistoryRepository);
 
     final long USER_ID = 1L;
+    final long USER_ID_2 = 2L;
+    final long USER_ID_3 = 3L;
 
     @BeforeEach
     void initCharge(){
         log.info("========초기 포인트 충전 시작========");
         pointService.charge(USER_ID, 10000L);
+        pointService.charge(USER_ID_2, 10000L);
+        pointService.charge(USER_ID_3, 10000L);
         log.info("========초기 포인트 충전 완료========");
     }
 
@@ -107,8 +111,10 @@ public class ConcurrentTest {
 
     @Test
     @DisplayName("동시에 한명에게 충전과 사용 성공")
-    void succeedWhenChargeAndUseRequestsAreProcessedSimultaneouslyForSingleUser() throws InterruptedException {
+    void succeedWhenChargeAndUseRequestsAreProcessedSimultaneouslyForMultiUser() throws InterruptedException {
         //given
+
+
         UserPoint prevUserPoint = pointService.getPoint(USER_ID);
 
         int threadCount = 4;
@@ -157,6 +163,78 @@ public class ConcurrentTest {
         //then
         assertThat(currentUserPoint.point()).isEqualTo(prevUserPoint.point() + 600);
         assertThat(pointHistoryList.size()).isEqualTo(threadCount + 1);
+    }
+
+    @Test
+    @DisplayName("동시에 여러명에게 충전과 사용 성공")
+    void succeedWhenChargeAndUseRequestsAreProcessedSimultaneouslyForSingleUser() throws InterruptedException {
+        //given
+        UserPoint prevUserPoint = pointService.getPoint(USER_ID);
+        UserPoint prevUserPoint2 = pointService.getPoint(USER_ID_2);
+        UserPoint prevUserPoint3 = pointService.getPoint(USER_ID_3);
+
+        int threadCount = 4;
+        ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        executorService.submit(() -> {
+            try {
+                pointService.charge(USER_ID, 500);
+                pointService.charge(USER_ID_2, 500);
+                pointService.charge(USER_ID_3, 500);
+            } finally {
+                latch.countDown(); // 스레드 작업 완료 후 카운트 다운
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
+                pointService.use(USER_ID, 350);
+                pointService.use(USER_ID_2, 350);
+                pointService.use(USER_ID_3, 350);
+            } finally {
+                latch.countDown(); // 스레드 작업 완료 후 카운트 다운
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
+                pointService.charge(USER_ID, 700);
+                pointService.charge(USER_ID_2, 700);
+                pointService.charge(USER_ID_3, 700);
+            } finally {
+                latch.countDown(); // 스레드 작업 완료 후 카운트 다운
+            }
+        });
+
+        executorService.submit(() -> {
+            try {
+                pointService.use(USER_ID, 250);
+                pointService.use(USER_ID_2, 250);
+                pointService.use(USER_ID_3, 250);
+            } finally {
+                latch.countDown(); // 스레드 작업 완료 후 카운트 다운
+            }
+        });
+
+        latch.await();
+        executorService.shutdown();
+
+        //when
+        UserPoint currentUserPoint1 = pointService.getPoint(USER_ID);
+        UserPoint currentUserPoint2 = pointService.getPoint(USER_ID_2);
+        UserPoint currentUserPoint3 = pointService.getPoint(USER_ID_3);
+        List<PointHistory> pointHistoryList1 = pointService.getAllHistory(USER_ID);
+        List<PointHistory> pointHistoryList2 = pointService.getAllHistory(USER_ID_2);
+        List<PointHistory> pointHistoryList3 = pointService.getAllHistory(USER_ID_3);
+
+        //then
+        assertThat(currentUserPoint1.point()).isEqualTo(prevUserPoint.point() + 600);
+        assertThat(currentUserPoint2.point()).isEqualTo(prevUserPoint2.point() + 600);
+        assertThat(currentUserPoint3.point()).isEqualTo(prevUserPoint3.point() + 600);
+        assertThat(pointHistoryList1.size()).isEqualTo(threadCount + 1);
+        assertThat(pointHistoryList2.size()).isEqualTo(threadCount + 1);
+        assertThat(pointHistoryList3.size()).isEqualTo(threadCount + 1);
     }
 
 }
