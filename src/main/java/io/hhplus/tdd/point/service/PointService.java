@@ -32,7 +32,7 @@ public class PointService {
         Lock lock = userLockMap.computeIfAbsent(String.valueOf(userId), k -> new ReentrantLock(true));
         lock.lock();
         long startLockTime = System.currentTimeMillis();
-        log.info("charge start - Id : {}", userId);
+        log.info("charge start - acquired Id : {}", userId);
 
         try {
             UserPoint userPoint = getPoint(userId);
