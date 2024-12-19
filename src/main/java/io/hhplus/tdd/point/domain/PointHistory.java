@@ -7,4 +7,5 @@ public record PointHistory(
         TransactionType type,
         long updateMillis
 ) {
+
 }
