@@ -32,7 +32,7 @@ public class PointService {
         Lock lock = userLockMap.computeIfAbsent(String.valueOf(userId), k -> new ReentrantLock(true));
         lock.lock();
         long startLockTime = System.currentTimeMillis();
-        log.info("charge start - acquired lock Id : {}", userId);
+        log.info("charge start - Id : {}", userId);
 
         try {
             UserPoint userPoint = getPoint(userId);
@@ -44,7 +44,7 @@ public class PointService {
             return userPointRepository.saveOrUpdate(updatedUserPoint.id(), updatedUserPoint.point());
         } finally {
             long lockEndTime = System.currentTimeMillis();
-            log.info("charge completed - time taken: {}", lockEndTime - startLockTime);
+            log.info("charge completed - completed Id : {}, time taken: {}",userId, lockEndTime - startLockTime);
             lock.unlock();
         }
     }
@@ -53,7 +53,7 @@ public class PointService {
         Lock lock = userLockMap.computeIfAbsent(String.valueOf(userId), k -> new ReentrantLock(true));
         lock.lock();
         long startLockTime = System.currentTimeMillis();
-        log.info("use start - acquired lock Id : {}", userId);
+        log.info("use start - acquired Id : {}", userId);
 
         try {
             UserPoint userPoint = getPoint(userId);
@@ -66,7 +66,7 @@ public class PointService {
         }
         finally {
             long lockEndTime = System.currentTimeMillis();
-            log.info("use completed - time taken: {}",lockEndTime - startLockTime);
+            log.info("use completed - completed Id : {}, time taken: {}",userId, lockEndTime - startLockTime);
             lock.unlock();
         }
     }
